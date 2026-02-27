@@ -3,12 +3,20 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useProperties } from "@/context/PropertiesContext";
 import PropertyCard from "./PropertyCard";
 
 export default function FeaturedProperties() {
-    const [properties, setProperties] = useState([]);
+    const { properties, loading: contextLoading, error } = useProperties();
     const [activeTab, setActiveTab] = useState("all-properties");
     const [loading, setLoading] = useState(true);
+
+    // Use context loading state
+    useEffect(() => {
+        if (!contextLoading) {
+            setLoading(false);
+        }
+    }, [contextLoading]);
 
     // Load saved order from localStorage
     const getSavedOrder = () => {
@@ -27,44 +35,25 @@ export default function FeaturedProperties() {
         return [...props].sort((a, b) => (order[a.id] || 999) - (order[b.id] || 999));
     };
 
-    const fetchProperties = async () => {
-        try {
-            const response = await fetch('/api/properties');
-            const data = await response.json();
-            if (data.properties) {
-                // Apply localStorage order
-                const sortedProperties = sortPropertiesByOrder(data.properties);
-                setProperties(sortedProperties);
-            }
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching properties:', error);
-            setLoading(false);
-        }
-    };
+    // Apply localStorage order to properties
+    const sortedProperties = sortPropertiesByOrder(properties);
 
-    useEffect(() => {
-        fetchProperties();
-    }, []);
-
-    const filteredProperties = properties.filter(property => {
+    const filteredProperties = sortedProperties.filter(property => {
         if (activeTab === "all-properties") return true;
         
-        // For Buy - include Under Construction, Sale category, or Residential category
+        // For Buy - show only Sale properties
         if (activeTab === "ForBuy") {
-            return property.status === "Under Construction" || 
-                          property.category === "Sale" || 
-                          property.category === "Residential";
+            return property.category === "Sale";
         }
         
-        // For Rent - include Rent category or Commercial category
+        // For Rent - show message (no properties)
         if (activeTab === "ForRent") {
-            return property.category === "Rent" || property.category === "Commercial";
+            return false;
         }
         
-        // Co-living
+        // Co-living - show message (no properties)
         if (activeTab === "co-living2") {
-            return property.category === "Co-living";
+            return false;
         }
         
         return true;

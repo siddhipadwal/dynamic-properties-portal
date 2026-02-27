@@ -34,9 +34,28 @@ export default function AddPartner() {
 
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this partner?')) return;
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+      localStorage.removeItem('admin');
+      router.push('/admin/login');
+      return;
+    }
+    
     setDeleting(id);
     try {
-      const response = await fetch(`/api/partners?id=${id}`, { method: 'DELETE' });
+      const response = await fetch(`/api/partners?id=${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.status === 401) {
+        localStorage.removeItem('admin');
+        localStorage.removeItem('token');
+        router.push('/admin/login');
+        return;
+      }
+      
       const data = await response.json();
       if (response.ok) setPartners(partners.filter(p => p.id !== id));
       else alert(data.error || 'Failed to delete partner');
@@ -67,10 +86,41 @@ export default function AddPartner() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check authentication first
+    const admin = localStorage.getItem('admin');
+    if (!admin) {
+      router.push('/admin/login');
+      return;
+    }
+    
+    // Get token
+    const token = localStorage.getItem('token');
+    if (!token) {
+      localStorage.removeItem('admin');
+      router.push('/admin/login');
+      return;
+    }
+    
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('/api/partners', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+      const response = await fetch('/api/partners', { 
+        method: 'POST', 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }, 
+        body: JSON.stringify(formData) 
+      });
+      
+      if (response.status === 401) {
+        localStorage.removeItem('admin');
+        localStorage.removeItem('token');
+        router.push('/admin/login');
+        return;
+      }
+      
       const data = await response.json();
       if (response.ok) router.push('/admin/dashboard');
       else setError(data.error || 'Failed to create partner');

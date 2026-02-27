@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProperties } from "@/context/PropertiesContext";
 import PropertyCard from "./PropertyCard";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
@@ -8,28 +9,17 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 export default function BestChoices() {
-    const [properties, setProperties] = useState([]);
+    const { properties, loading: contextLoading, error } = useProperties();
     const [activeTab, setActiveTab] = useState("under-construction");
     const [loading, setLoading] = useState(true);
     const [swiperInstance, setSwiperInstance] = useState(null);
 
-    const fetchProperties = async () => {
-        try {
-            const response = await fetch('/api/properties');
-            const data = await response.json();
-            if (data.properties) {
-                setProperties(data.properties);
-            }
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching properties:', error);
+    // Use context loading state
+    useEffect(() => {
+        if (!contextLoading) {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchProperties();
-    }, []);
+    }, [contextLoading]);
 
     const filteredProperties = properties.filter(property => {
         // First filter by isBestChoice - handle both boolean and integer (1/0) types
@@ -64,38 +54,37 @@ export default function BestChoices() {
                             Best Choice
                         </span>
                         <h2 className="font-lora text-primary text-[24px] sm:text-[30px] xl:text-[30px] capitalize font-medium">
-                            Popular Properties<span className="text-secondary">.</span>
+                            Best Choices<span className="text-secondary">.</span>
                         </h2>
                     </div>
                 </div>
-                
-                {/* Tabs */}
-                <div className="flex justify-center mb-[40px]">
+
+                {/* Tab Buttons */}
+                <div className="flex flex-wrap justify-center gap-4 mb-10">
                     <button
                         onClick={() => setActiveTab("under-construction")}
-                        className={`tab-button px-6 py-2 font-medium border-b-2 mr-4 transition-all ${
+                        className={`px-6 py-2 rounded-full transition-all ${
                             activeTab === "under-construction" 
-                            ? "border-primary text-primary" 
-                            : "border-transparent text-gray-500 hover:text-primary"
+                            ? "bg-secondary text-white" 
+                            : "bg-gray-200 text-primary hover:bg-secondary hover:text-white"
                         }`}
                     >
                         Under Construction
                     </button>
                     <button
                         onClick={() => setActiveTab("ready-to-move")}
-                        className={`tab-button px-6 py-2 font-medium border-b-2 transition-all ${
+                        className={`px-6 py-2 rounded-full transition-all ${
                             activeTab === "ready-to-move" 
-                            ? "border-primary text-primary" 
-                            : "border-transparent text-gray-500 hover:text-primary"
+                            ? "bg-secondary text-white" 
+                            : "bg-gray-200 text-primary hover:bg-secondary hover:text-white"
                         }`}
                     >
                         Ready to Move
                     </button>
                 </div>
-                
-                {/* Properties Swiper */}
+
+                {/* Properties Carousel */}
                 <div className="relative">
-                    {/* Navigation Buttons */}
                     <button 
                         onClick={goPrev}
                         className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-[50px] h-[50px] rounded-full bg-white shadow-lg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all -ml-5"

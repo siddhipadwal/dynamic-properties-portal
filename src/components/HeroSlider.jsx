@@ -8,7 +8,7 @@ const slides = [
     logo: "assets/images/img/builders logo/crescent.png",
     title: "LUXURY LIVING BY CRESCENT",
     description: "Crescent Bay offers breathtaking sea views and premium amenities in the heart of Mumbai.",
-    location: "Parel Mumbai",
+    location: "JOGESHWARI",
     heroImage: "assets/images/img/hero/crescent.png",
     link: "/properties/40",
   },

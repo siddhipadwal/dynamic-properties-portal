@@ -19,15 +19,18 @@ function checkAuth(request) {
   return { authorized: true, admin: decoded };
 }
 
-// GET all properties (public - no auth required)
+// GET all properties (public - with caching for better performance)
 export async function GET(request) {
   try {
     // Get all properties without sorting (order handled by frontend via localStorage)
     const [rows] = await pool.query('SELECT * FROM properties ORDER BY created_at DESC');
+    
+    // Cache for 60 seconds, allow stale data for 5 minutes while revalidating
+    // This dramatically improves performance while keeping data fresh
     return NextResponse.json({ properties: rows }, {
       headers: {
-        'Cache-Control': 'no-store, must-revalidate',
-        'Pragma': 'no-cache'
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Pragma': 'public'
       }
     });
   } catch (error) {

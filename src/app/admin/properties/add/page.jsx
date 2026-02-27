@@ -120,12 +120,31 @@ export default function AddProperty() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check authentication first
+    const admin = localStorage.getItem('admin');
+    if (!admin) {
+      router.push('/admin/login');
+      return;
+    }
+    
+    // Get token
+    const token = localStorage.getItem('token');
+    if (!token) {
+      localStorage.removeItem('admin');
+      router.push('/admin/login');
+      return;
+    }
+    
     setError('');
     setLoading(true);
     try {
       const response = await fetch('/api/properties', {
         method: 'POST', 
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ 
           ...formData, 
           pricePerSqFt: parseInt(formData.pricePerSqFt), 
@@ -137,6 +156,15 @@ export default function AddProperty() {
         })
       });
       const data = await response.json();
+      
+      if (response.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('admin');
+        localStorage.removeItem('token');
+        router.push('/admin/login');
+        return;
+      }
+      
       if (response.ok) router.push('/admin/dashboard');
       else setError(data.error || 'Failed to create property');
     } catch (err) { setError('An error occurred. Please try again.'); }

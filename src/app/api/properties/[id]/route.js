@@ -19,7 +19,7 @@ function checkAuth(request) {
   return { authorized: true, admin: decoded };
 }
 
-// GET single property by ID (public)
+// GET single property by ID (public - with caching)
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
@@ -29,7 +29,13 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
     
-    return NextResponse.json({ property: rows[0] });
+    // Cache single property for 60 seconds, allow stale for 5 minutes
+    return NextResponse.json({ property: rows[0] }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Pragma': 'public'
+      }
+    });
   } catch (error) {
     console.error('Error fetching property:', error);
     return NextResponse.json({ error: 'Failed to fetch property' }, { status: 500 });

@@ -124,8 +124,10 @@ export default function AdminDashboard() {
     
     try {
       const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+      const token = localStorage.getItem('token');
       const response = await fetch(`/api/properties/${numericId}`, { 
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       
       const data = await response.json();
